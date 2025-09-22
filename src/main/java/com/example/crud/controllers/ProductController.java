@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -130,6 +131,24 @@ public class ProductController {
         } else {
             throw new EntityNotFoundException();
         }
+    }
+    @GetMapping("/{productId}/check-availability/{cep}")
+    public ResponseEntity<Map<String, Boolean>> checkProductAvailability(
+            @PathVariable String productId,
+            @PathVariable String cep) {
+
+
+        Optional<Product> optionalProduct = repository.findById(productId);
+
+        if (optionalProduct.isEmpty()) {
+            throw new EntityNotFoundException("Produto não encontrado");
+        }
+        Product product = optionalProduct.get();
+
+        Boolean isAvailable = addressSearchService.checkDistributionCenterAvailability(cep, product);
+
+        Map<String, Boolean> response = Map.of("available", isAvailable);
+        return ResponseEntity.ok(response);
     }
 
 }
