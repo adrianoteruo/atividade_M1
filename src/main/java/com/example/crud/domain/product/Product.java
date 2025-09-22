@@ -24,6 +24,9 @@ public class Product {
 
     private String category;
 
+    @Column(name = "distribution_center")
+    private String distributionCenter;
+
     public Product(RequestProduct requestProduct){
         this.name = requestProduct.name();
         this.price = requestProduct.price();
