@@ -4,7 +4,8 @@ import com.example.crud.domain.product.Product;
 import com.example.crud.domain.product.ProductRepository;
 import com.example.crud.domain.category.RequestCategory;
 import com.example.crud.domain.product.RequestProduct;
-import com.example.crud.service.AddressSearch;
+import com.example.crud.service.AddressResponse;
+import com.example.crud.service.AddressSearchService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +22,13 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/product")
 public class ProductController {
-    @Autowired
-    private ProductRepository repository;
-    private final AddressSearch addressSearch;
+    private final ProductRepository repository;
+    private final AddressSearchService addressSearchService;
 
     @Autowired
-    public ProductController(ProductRepository repository, AddressSearch addressSearch) {
+    public ProductController(ProductRepository repository, AddressSearchService addressSearchService) {
         this.repository = repository;
-        this.addressSearch = addressSearch;
+        this.addressSearchService = addressSearchService;
     }
 
     @GetMapping
@@ -38,9 +38,20 @@ public class ProductController {
     }
 
     @GetMapping("/cep")
-    public ResponseEntity verifyAvailability(@RequestParam String state, @RequestParam String city, @RequestParam String street){
-        String cep = addressSearch.searchAddress(state, city, street);
-        return ResponseEntity.ok(cep);
+    public ResponseEntity<String> verifyAvailability(@RequestParam String state, @RequestParam String city, @RequestParam String street) {
+        AddressResponse[] addresses = addressSearchService.searchByAddress(state, city, street);
+
+        if (addresses != null && addresses.length > 0) {
+            String cep = addresses[0].cep();
+            return ResponseEntity.ok(cep);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    @GetMapping("/address/{cep}")
+    public ResponseEntity<AddressResponse> getAddressByCep(@PathVariable String cep) {
+        AddressResponse address = addressSearchService.searchByCep(cep);
+        return ResponseEntity.ok(address);
     }
 
     @GetMapping("/endpoint1") //products from only one category
